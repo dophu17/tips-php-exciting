@@ -41,11 +41,11 @@ public function getTaskLog() {
 		));
 	}
 
-
-$('#send-cw').click(function (e) {
+	$('#send-cw').click(function (e) {
+				var webroot = '<?php echo $this->webroot ?>';
 				$.ajax({
 					method: "POST",
-					url: "http://localhost:8888/cakephp/cakephp2x/tasks/getTaskLog",
+					url: webroot + "tasks/getTaskLog",
 					data: { taskIdToday: JSON.stringify(taskIdToday) }
 				}).done(function( res ) {
 					var results = JSON.parse(res);
