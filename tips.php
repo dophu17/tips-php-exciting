@@ -61,3 +61,42 @@ public function getTaskLog() {
 					});
 				});
 			});
+
+	public function getAutocomplete() {
+		$this->autoRender = false;
+		$siteName = $this->request->data['siteName'];
+		$sites = $this->Site->find('all', array(
+			'conditions' => array(
+				'Site.site_name LIKE' => '%' . $siteName . '%'
+			)
+		));
+		$tmpSites = array();
+		foreach ( $sites as $site ) {
+			$tmpSites[] = $site['Site'];
+		}
+		return json_encode(array(
+			'error' => false,
+			'data' => $tmpSites
+		));
+	}
+
+	$(document).ready(function(){
+			$("#input-autocomplete").keyup(function(){
+				var siteName = $(this).val();
+				$.ajax({
+					method: "POST",
+					url: "http://localhost:8888/cakephp/cakephp2x/sites/getAutocomplete",
+					data: { siteName: siteName }
+				}).done(function( results ) {
+					var res = JSON.parse(results);
+					console.log(res);
+					$('#list-site').html('');
+					if ( res.data.length == 0 ) {
+						$('#list-site').append('<li>Not found</li>');
+					}
+					$( res.data ).each(function( index, value ) {
+						$('#list-site').append('<li><a href="">' + value.site_name + '</a></li>');
+					});
+				});
+			});
+		});
