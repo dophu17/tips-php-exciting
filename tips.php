@@ -100,3 +100,78 @@ public function getTaskLog() {
 				});
 			});
 		});
+		
+		
+		//shishimai cty ok 12/06
+		public function getTaskLog() {
+			$this->autoRender = false;
+			$this->loadModel('SsmTaskLog');
+			$userLogin = $this->loginUser;
+			$taskIds = $this->request->data['arrTaskId'];
+			$taskIdsArr = json_decode($taskIds);
+			if ( count($taskIdsArr) > 1 ) {
+				$cond['SsmTask.id IN'] = $taskIdsArr;
+			} else {
+				$cond['SsmTask.id'] = $taskIdsArr;
+			}
+			$cond['SsmTask.user_id'] = $userLogin['SsmUser']['id'];
+
+			$taskLogs = $this->SsmTaskLog->find('all', array(
+				'conditions' => $cond,
+				'joins' => array(
+					array(
+						'table' => 'ssm_tasks',
+						'alias' => 'SsmTask',
+						'type' => 'RIGHT',
+						'conditions' => array(
+							'SsmTaskLog.task_id = SsmTask.id'
+						)
+					)
+				),
+				'fields' => array('SsmTaskLog.*', 'SsmTask.name', 'SUM(SsmTaskLog.task_time) as sum_task_time'),
+				'order' => 'SsmTask.name ASC',
+				'group' => 'SsmTask.id'
+			));
+			if ( $taskLogs && count($taskLogs) > 0 ) {
+				$arrTaskLog = array();
+				foreach ( $taskLogs as $taskLog ) {
+					$tmpArr = $taskLog['SsmTaskLog'];
+					$tmpArr['sum_task_time'] = number_format($taskLog[0]['sum_task_time'], 0);
+					$tmpArr['name'] = $taskLog['SsmTask']['name'];
+					$arrTaskLog[] = $tmpArr;
+				}
+				return json_encode(array(
+					'error' => false,
+					'data' => $arrTaskLog
+				));
+			}
+			return json_encode(array(
+				'error' => true,
+				'data' => array()
+			));
+		}
+		function showTaskLog() {
+			if ( arrTaskId.length > 0 ) {
+				$('#task-log').html('<tr>' +
+				  '<td class="task-name">タスク名</td>' +
+				  '<td class="task-time">合計時間（h）</td>' +
+				  '</tr>');
+				$.ajax({
+					method: "POST",
+					url: baseUrl + "ShishimaiApi/getTaskLog",
+					data: { arrTaskId: JSON.stringify(arrTaskId) }
+				}).done(function( res ) {
+					var results = JSON.parse(res);
+					$('#modalTaskLog').modal('show');
+					if ( !results.error && results.data.length > 0 ) {
+						$(results.data).each(function( index, value ) {
+							$('#task-log').append('<tr>' +
+							  '<td>' + value.name + '</td>' +
+							  '<td>' + value.sum_task_time + '</td>' +
+							  '</tr>');
+						});
+					}
+				});
+			}
+		}
+		//end shishimai cty ok 12/06
